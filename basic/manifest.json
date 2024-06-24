@@ -1,19 +1,25 @@
 {
   "manifest_version": 3,
-  "name": "AutoLogin Extension",
+  "name": "Open KAIST Login",
+  "description": "This extension opens the KAIST login page.",
   "version": "1.0",
   "permissions": [
-    "activeTab",
-    "scripting"
+    "activeTab"
   ],
   "background": {
     "service_worker": "background.js"
   },
   "action": {
-    "default_icon": {}
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icon16.png",
+      "48": "icon48.png",
+      "128": "icon128.png"
+    }
   },
-  "content_scripts": [{
-    "matches": ["https://iam2.kaist.ac.kr/*"],
-    "js": ["content.js"]
-  }]
+  "icons": {
+    "16": "icon16.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  }
 }
