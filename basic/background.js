@@ -1,3 +1,6 @@
-chrome.action.onClicked.addListener(function(tab) {
-  chrome.tabs.create({ url: 'https://iam2.kaist.ac.kr/#/commonLogin' });
+window.addEventListener('load', function() {
+    const inputField = document.getElementById('IdInput');
+    if (inputField) {
+        inputField.value = 'seohyun8646';
+    }
 });
