@@ -1,6 +1,3 @@
-chrome.action.onClicked.addListener((tab) => {
-  chrome.scripting.executeScript({
-    target: {tabId: tab.id},
-    files: ['content.js']
-  });
+chrome.action.onClicked.addListener(function(tab) {
+  chrome.tabs.create({ url: 'https://iam2.kaist.ac.kr/#/commonLogin' });
 });
