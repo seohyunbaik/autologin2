@@ -1,11 +1,17 @@
 {
   "manifest_version": 3,
   "name": "Open KAIST Login",
-  "description": "This extension opens the KAIST login page.",
+  "description": "This extension opens the KAIST login page and fills in the username.",
   "version": "1.0",
-  "permissions": ["activeTab"],
+  "permissions": ["activeTab", "https://iam2.kaist.ac.kr/*"],
   "background": {
     "service_worker": "background.js"
   },
+  "content_scripts": [
+    {
+      "matches": ["https://iam2.kaist.ac.kr/*"],
+      "js": ["content.js"]
+    }
+  ],
   "action": {}
 }
