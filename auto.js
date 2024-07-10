@@ -1,48 +1,103 @@
-function automateLoginProcess() {
-  // Wait for the page to load completely
-  window.addEventListener('DOMContentLoaded', (event) => {
-    // Step 1: Enter username
-    const usernameInput = document.querySelector('#IdInput');
-    if (usernameInput) {
-      usernameInput.value = 'seohyun8646';
-    }
 
-    // Step 2: Submit to proceed to password
-    const submitUsername = document.querySelector('input[type="submit"][value="비밀번호 인증"]');
-    submitUsername && submitUsername.click();
+// as you can see, right now the verification code is the placeholder value of 111111. however, as you can see from the background.js "chrome.action.onClicked.addListener(() => {
+  console.log("Opening login page and checking for emails...");
 
-    // Delay for next elements to potentially load/render
-    setTimeout(() => {
-      // Step 3: Enter password
-      const passwordInput = document.querySelector('#passwordInput');
-      if (passwordInput) {
-        passwordInput.value = '1111'; // This should be handled more securely
-      }
+  chrome.tabs.create({ url: 'https://iam2.kaist.ac.kr/#/commonLogin' }, (tab) => {
+      chrome.scripting.executeScript({
+          target: { tabId: tab.id },
+          files: ['content.js']
+      });
 
-      // Step 4: Click login button
-      const loginButton = document.querySelector('input[type="submit"].loginbtn');
-      loginButton && loginButton.click();
+      console.log("Starting email check...");
 
-      // Additional delay for possible next steps
-      setTimeout(() => {
-        // Step 5: Click on external email button
-        const emailButton = document.querySelector('input[type="submit"]#email');
-        emailButton && emailButton.click();
+      function handleToken(token) {
+          let intervalId = null;
+          let timeoutId = setTimeout(() => {
+              console.log("Timeout reached, stopping checks.");
+              clearInterval(intervalId);
+          }, 60000); // Stop after 1 minute
 
-        setTimeout(() => {
-          // Step 6: Enter external email verification code and login
-          const emailVerificationInput = document.querySelector('input[type="password"][placeholder="외부 메일 인증번호 입력"]');
-          if (emailVerificationInput) {
-            emailVerificationInput.value = '111111'; // This should also be handled more securely
+          function checkForEmails() {
+              const query = from:iamps@kaist.ac.kr;
+
+              fetch(https://www.googleapis.com/gmail/v1/users/me/messages?q=${encodeURIComponent(query)}, {
+                  method: 'GET',
+                  headers: {
+                      'Authorization': Bearer ${token},
+                  }
+              })
+              .then(response => response.json())
+              .then(data => {
+                  if (data.messages && data.messages.length > 0) {
+                      console.log("Email from iamps@kaist.ac.kr found:", data.messages.length, "emails");
+                      data.messages.forEach(message => {
+                          fetchMessageContent(message.id, token);
+                      });
+                  } else {
+                      console.log("No emails from iamps@kaist.ac.kr found");
+                  }
+              })
+              .catch(error => {
+                  console.error("Failed to fetch emails:", error);
+              });
           }
 
-          const finalLoginButton = document.querySelector('input[type="submit"][value="로그인"]');
-          finalLoginButton && finalLoginButton.click();
-        }, 1000); // Adjust timing based on actual page behavior
-      }, 1000);
-    }, 1000);
-  });
-}
+          function fetchMessageContent(messageId, token) {
+              fetch(https://www.googleapis.com/gmail/v1/users/me/messages/${messageId}, {
+                  method: 'GET',
+                  headers: {
+                      'Authorization': Bearer ${token},
+                  }
+              })
+              .then(response => response.json())
+              .then(email => {
+                  const parts = email.payload.parts || [];
+                  let bodyText = "";
+                  if (parts.length) {
+                      bodyText = atob(parts[0].body.data.replace(/-/g, '+').replace(/_/g, '/'));
+                  } else if (email.payload.body.data) {
+                      bodyText = atob(email.payload.body.data.replace(/-/g, '+').replace(/_/g, '/'));
+                  }
 
-// Call the function to execute the script
-automateLoginProcess();
+                  // Extract 6-digit code from the email content
+                  const codeMatch = bodyText.match(/\b\d{6}\b/);
+                  if (codeMatch) {
+                      console.log("Extracted Code:", codeMatch[0]);
+                      clearInterval(intervalId);
+                      clearTimeout(timeoutId);
+                      chrome.tabs.sendMessage(tab.id, { code: codeMatch[0] });
+                  } else {
+                      console.log("No 6-digit code found in the email.");
+                  }
+              })
+              .catch(error => {
+                  console.error("Failed to fetch email content:", error);
+              });
+          }
+
+          intervalId = setInterval(checkForEmails, 500); // Check every 0.5 seconds
+          checkForEmails(); // Also initiate the first check immediately
+      }
+
+      function refreshToken() {
+          chrome.identity.getAuthToken({ 'interactive': false }, function(token) {
+              if (chrome.runtime.lastError) {
+                  console.error("Silent token refresh failed, error:", chrome.runtime.lastError.message);
+                  chrome.identity.getAuthToken({ 'interactive': true }, function(token) {
+                      if (!chrome.runtime.lastError) {
+                          console.log('Interactively refreshed token:', token);
+                          handleToken(token);
+                      } else {
+                          console.error("Interactive token refresh also failed:", chrome.runtime.lastError.message);
+                      }
+                  });
+              } else {
+                  console.log('Silently refreshed token:', token);
+                  handleToken(token);
+              }
+          });
+      }
+
+      refreshToken();
+  });
+});", the code is obtained in the background.js. Change this so that the obtained code is used instead of the placeholder value
